@@ -6,7 +6,7 @@
   "miniapp": {
     "name": "Persona AI",
     "description": "Live Multiple Digital Lives Through AI Clones",
-    "url": "https://your-app.vercel.app",
+    "url": "http://persona-ai-rouge.vercel.app",
     "icon": "/icon.png"
   },
   "baseBuilder": {
