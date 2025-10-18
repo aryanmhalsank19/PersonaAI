@@ -1,0 +1,165 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GEMINI_API_KEY } from './constants';
+
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+
+export interface PersonalityProfile {
+  id: string;
+  userId: string;
+  coreValues: string[];
+  decisionMakingStyle: string;
+  communicationStyle: string;
+  riskTolerance: 'low' | 'medium' | 'high';
+  socialPreferences: string[];
+  careerInterests: string[];
+  relationshipPatterns: string[];
+  strengths: string[];
+  weaknesses: string[];
+  goals: string[];
+  fears: string[];
+  motivations: string[];
+  personalityTraits: {
+    openness: number;
+    conscientiousness: number;
+    extraversion: number;
+    agreeableness: number;
+    neuroticism: number;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface InterviewQuestion {
+  id: string;
+  category: string;
+  question: string;
+  followUp?: string;
+  weight: number;
+}
+
+export class PersonalityCaptureEngine {
+  private model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+  async generateInterviewQuestions(category: string): Promise<InterviewQuestion[]> {
+    const prompt = `
+    Generate 5-7 interview questions for personality assessment in the category: ${category}
+    
+    Categories include: values, decision-making, relationships, career, goals, fears, strengths, weaknesses
+    
+    Return as JSON array with this structure:
+    {
+      "id": "unique_id",
+      "category": "${category}",
+      "question": "Question text",
+      "followUp": "Optional follow-up question",
+      "weight": 1-5
+    }
+    
+    Make questions conversational and insightful for understanding personality.
+    `;
+
+    try {
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      // Extract JSON from response
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      throw new Error('Could not parse interview questions');
+    } catch (error) {
+      console.error('Error generating interview questions:', error);
+      throw error;
+    }
+  }
+
+  async analyzePersonality(interviewResponses: Record<string, string>): Promise<PersonalityProfile> {
+    const prompt = `
+    Analyze these interview responses to create a comprehensive personality profile:
+    
+    ${JSON.stringify(interviewResponses, null, 2)}
+    
+    Return a JSON object with this exact structure:
+    {
+      "coreValues": ["value1", "value2", "value3"],
+      "decisionMakingStyle": "analytical/emotional/intuitive/collaborative",
+      "communicationStyle": "direct/indirect/assertive/passive",
+      "riskTolerance": "low/medium/high",
+      "socialPreferences": ["preference1", "preference2"],
+      "careerInterests": ["interest1", "interest2"],
+      "relationshipPatterns": ["pattern1", "pattern2"],
+      "strengths": ["strength1", "strength2"],
+      "weaknesses": ["weakness1", "weakness2"],
+      "goals": ["goal1", "goal2"],
+      "fears": ["fear1", "fear2"],
+      "motivations": ["motivation1", "motivation2"],
+      "personalityTraits": {
+        "openness": 0.0-1.0,
+        "conscientiousness": 0.0-1.0,
+        "extraversion": 0.0-1.0,
+        "agreeableness": 0.0-1.0,
+        "neuroticism": 0.0-1.0
+      }
+    }
+    
+    Be thorough and accurate in your analysis.
+    `;
+
+    try {
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      // Extract JSON from response
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const analysis = JSON.parse(jsonMatch[0]);
+        return {
+          id: crypto.randomUUID(),
+          userId: '', // Will be set by caller
+          ...analysis,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+      }
+      throw new Error('Could not parse personality analysis');
+    } catch (error) {
+      console.error('Error analyzing personality:', error);
+      throw error;
+    }
+  }
+
+  async generateAIClone(personality: PersonalityProfile, cloneType: string): Promise<string> {
+    const prompt = `
+    Create an AI clone based on this personality profile:
+    
+    ${JSON.stringify(personality, null, 2)}
+    
+    Clone type: ${cloneType}
+    
+    Generate a detailed personality prompt that will make this AI clone think, communicate, and act like the person.
+    Include:
+    - Core personality traits and values
+    - Communication style and preferences
+    - Decision-making patterns
+    - Behavioral tendencies
+    - Goals and motivations
+    - Fears and concerns
+    
+    Make it comprehensive and specific for creating a realistic AI clone.
+    `;
+
+    try {
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error('Error generating AI clone:', error);
+      throw error;
+    }
+  }
+}
+
+export const personalityEngine = new PersonalityCaptureEngine();
