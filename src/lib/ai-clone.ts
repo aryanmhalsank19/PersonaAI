@@ -56,7 +56,7 @@ export class AICloneManager {
     const personalityPrompt = await this.generatePersonalityPrompt(personality, cloneType);
     
     return {
-      id: crypto.randomUUID(),
+      id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36),
       userId,
       name,
       personalityProfile: personality,
@@ -113,7 +113,7 @@ export class AICloneManager {
     parameters: Record<string, any> = {}
   ): Promise<Simulation> {
     const simulation: Simulation = {
-      id: crypto.randomUUID(),
+      id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36),
       cloneId: clone.id,
       type: simulationType,
       scenario,

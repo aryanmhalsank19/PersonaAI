@@ -306,6 +306,13 @@ export class DatabaseService {
   }
 
   async createAIClone(cloneData: Database['public']['Tables']['ai_clones']['Insert']) {
+    if (!supabase) {
+      console.log('Supabase not configured, using in-memory storage');
+      const clone = { ...cloneData, id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      this.inMemoryStorage.set(`clone_${cloneData.user_id}_${clone.id}`, clone);
+      return clone;
+    }
+
     const { data, error } = await supabase
       .from('ai_clones')
       .insert(cloneData)

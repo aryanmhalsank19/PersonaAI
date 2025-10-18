@@ -31,9 +31,11 @@ export function AICloneDashboard({ onCloneCreated }: AICloneDashboardProps) {
 
     setIsCreating(true);
     try {
+      console.log('Starting clone creation...', { name: newCloneName, type: newCloneType });
+      
       // Get personality profile (in real app, this would come from the user's profile)
       const personalityProfile = {
-        id: 'temp-profile-id',
+        id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36),
         userId: 'temp-user-id',
         coreValues: ['growth', 'authenticity', 'creativity'],
         decisionMakingStyle: 'analytical',
@@ -58,6 +60,7 @@ export function AICloneDashboard({ onCloneCreated }: AICloneDashboardProps) {
         updatedAt: new Date()
       };
 
+      console.log('Creating AI clone with personality profile...');
       const newClone = await aiCloneManager.createClone(
         'temp-user-id',
         personalityProfile,
@@ -65,28 +68,45 @@ export function AICloneDashboard({ onCloneCreated }: AICloneDashboardProps) {
         newCloneName
       );
 
-      // Save to database
-      await db.createAIClone({
-        user_id: 'temp-user-id',
-        name: newClone.name,
-        personality_profile_id: personalityProfile.id,
-        clone_type: newClone.cloneType,
-        personality_prompt: newClone.personalityPrompt,
-        status: 'creating',
-        stats: {
-          simulations_run: 0,
-          total_runtime: 0,
-          success_rate: 0,
-          last_active: new Date().toISOString()
-        }
-      });
+      console.log('AI clone created successfully:', newClone);
+
+      // Save to database (with fallback)
+      try {
+        await db.createAIClone({
+          user_id: 'temp-user-id',
+          name: newClone.name,
+          personality_profile_id: personalityProfile.id,
+          clone_type: newClone.cloneType,
+          personality_prompt: newClone.personalityPrompt,
+          status: 'creating',
+          stats: {
+            simulations_run: 0,
+            total_runtime: 0,
+            success_rate: 0,
+            last_active: new Date().toISOString()
+          }
+        });
+        console.log('Clone saved to database');
+      } catch (dbError) {
+        console.warn('Database save failed, continuing with in-memory storage:', dbError);
+      }
 
       setClones(prev => [...prev, newClone]);
       setShowCreateForm(false);
       setNewCloneName('');
       onCloneCreated();
+      
+      console.log('Clone creation completed successfully!');
     } catch (error) {
       console.error('Error creating clone:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        name: newCloneName,
+        type: newCloneType
+      });
+      
+      alert(`Failed to create clone: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`);
     } finally {
       setIsCreating(false);
     }
