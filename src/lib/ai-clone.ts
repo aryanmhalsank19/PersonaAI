@@ -47,15 +47,37 @@ export interface SimulationResults {
 export class AICloneManager {
   private model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
+  private async testGeminiConnection(): Promise<boolean> {
+    try {
+      console.log('Testing Gemini API connection...');
+      const result = await this.model.generateContent('Hello, respond with "API working"');
+      const response = await result.response;
+      const text = response.text();
+      console.log('Gemini API test successful:', text);
+      return true;
+    } catch (error) {
+      console.error('Gemini API test failed:', error);
+      return false;
+    }
+  }
+
   async createClone(
     userId: string,
     personality: PersonalityProfile,
     cloneType: string,
     name: string
   ): Promise<AIClone> {
+    console.log('Creating AI clone:', { userId, cloneType, name });
+    
+    // Test Gemini connection first
+    const isGeminiWorking = await this.testGeminiConnection();
+    if (!isGeminiWorking) {
+      console.warn('Gemini API not working, using fallback personality prompt');
+    }
+    
     const personalityPrompt = await this.generatePersonalityPrompt(personality, cloneType);
     
-    return {
+    const clone: AIClone = {
       id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36),
       userId,
       name,
@@ -72,12 +94,23 @@ export class AICloneManager {
         lastActive: new Date()
       }
     };
+    
+    console.log('AI clone created successfully:', clone);
+    return clone;
   }
 
   private async generatePersonalityPrompt(
     personality: PersonalityProfile,
     cloneType: string
   ): Promise<string> {
+    console.log('Generating personality prompt...', { cloneType });
+    
+    // Check if Gemini API is available
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'your_gemini_api_key_here') {
+      console.warn('Gemini API key not configured, using fallback prompt');
+      return this.createFallbackPersonalityPrompt(personality, cloneType);
+    }
+
     const prompt = `
     Create a detailed personality prompt for an AI clone based on this profile:
     
@@ -97,13 +130,40 @@ export class AICloneManager {
     `;
 
     try {
+      console.log('Sending request to Gemini API for personality prompt...');
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
-      return response.text();
+      const text = response.text();
+      console.log('Personality prompt generated successfully');
+      return text;
     } catch (error) {
       console.error('Error generating personality prompt:', error);
-      throw error;
+      console.error('Falling back to default prompt');
+      return this.createFallbackPersonalityPrompt(personality, cloneType);
     }
+  }
+
+  private createFallbackPersonalityPrompt(personality: PersonalityProfile, cloneType: string): string {
+    const { coreValues, decisionMakingStyle, communicationStyle, strengths, goals } = personality;
+    
+    return `You are an AI clone representing a person with these characteristics:
+
+Core Values: ${coreValues.join(', ')}
+Decision Making Style: ${decisionMakingStyle}
+Communication Style: ${communicationStyle}
+Key Strengths: ${strengths.join(', ')}
+Main Goals: ${goals.join(', ')}
+
+Clone Type: ${cloneType}
+
+Behavior Guidelines:
+- Make decisions based on the core values and decision-making style
+- Communicate in the specified style (${communicationStyle})
+- Focus on achieving the main goals while leveraging your strengths
+- Be authentic to the personality profile in all interactions
+- Consider the clone type specialization when making choices
+
+When faced with scenarios, think through them using the person's values and decision-making patterns. Provide thoughtful, authentic responses that reflect this personality.`;
   }
 
   async runSimulation(

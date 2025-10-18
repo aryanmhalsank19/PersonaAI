@@ -306,21 +306,47 @@ export class DatabaseService {
   }
 
   async createAIClone(cloneData: Database['public']['Tables']['ai_clones']['Insert']) {
+    console.log('Creating AI clone in database...', cloneData);
+    
     if (!supabase) {
       console.log('Supabase not configured, using in-memory storage');
-      const clone = { ...cloneData, id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      const clone = { 
+        ...cloneData, 
+        id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36), 
+        created_at: new Date().toISOString(), 
+        updated_at: new Date().toISOString() 
+      };
       this.inMemoryStorage.set(`clone_${cloneData.user_id}_${clone.id}`, clone);
+      console.log('Clone saved to in-memory storage:', clone);
       return clone;
     }
 
-    const { data, error } = await supabase
-      .from('ai_clones')
-      .insert(cloneData)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
+    try {
+      const { data, error } = await supabase
+        .from('ai_clones')
+        .insert(cloneData)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Clone saved to Supabase:', data);
+      return data;
+    } catch (error) {
+      console.error('Database save failed, falling back to in-memory storage:', error);
+      // Fallback to in-memory storage
+      const clone = { 
+        ...cloneData, 
+        id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36), 
+        created_at: new Date().toISOString(), 
+        updated_at: new Date().toISOString() 
+      };
+      this.inMemoryStorage.set(`clone_${cloneData.user_id}_${clone.id}`, clone);
+      return clone;
+    }
   }
 
   async getAIClones(userId: string) {
