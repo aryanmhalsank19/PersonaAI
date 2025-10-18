@@ -162,11 +162,13 @@ export function PersonalityCapture({ onComplete }: PersonalityCaptureProps) {
       console.error('Error details:', {
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
-        responses: responses
+        responses: responses,
+        errorType: typeof error,
+        errorString: String(error)
       });
       
       // Show user-friendly error message
-      alert('Failed to analyze personality. Please try again or contact support if the issue persists.');
+      alert(`Failed to analyze personality: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or contact support if the issue persists.`);
     } finally {
       setIsAnalyzing(false);
     }

@@ -128,7 +128,7 @@ export class PersonalityCaptureEngine {
         const analysis = JSON.parse(jsonMatch[0]);
         console.log('Parsed personality analysis:', analysis);
         return {
-          id: crypto.randomUUID(),
+          id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36),
           userId: '', // Will be set by caller
           ...analysis,
           createdAt: new Date(),
@@ -160,7 +160,7 @@ export class PersonalityCaptureEngine {
     const isRiskTaker = allText.includes('risk') || allText.includes('adventure') || allText.includes('bold');
     
     return {
-      id: crypto.randomUUID(),
+      id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36),
       userId: '',
       coreValues: ['Honesty', 'Growth', 'Relationships'],
       decisionMakingStyle: isAnalytical ? 'analytical' : isEmotional ? 'emotional' : 'intuitive',

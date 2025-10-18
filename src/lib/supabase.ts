@@ -240,7 +240,7 @@ export class DatabaseService {
   async createUser(userData: Database['public']['Tables']['users']['Insert']) {
     if (!supabase) {
       console.log('Supabase not configured, using in-memory storage');
-      const user = { ...userData, id: crypto.randomUUID(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      const user = { ...userData, id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
       this.inMemoryStorage.set(`user_${userData.fid}`, user);
       return user;
     }
@@ -274,7 +274,7 @@ export class DatabaseService {
   async createPersonalityProfile(profileData: Database['public']['Tables']['personality_profiles']['Insert']) {
     if (!supabase) {
       console.log('Supabase not configured, using in-memory storage');
-      const profile = { ...profileData, id: crypto.randomUUID(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      const profile = { ...profileData, id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
       this.inMemoryStorage.set(`personality_${profileData.user_id}`, profile);
       return profile;
     }
