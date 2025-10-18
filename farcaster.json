@@ -1,7 +1,11 @@
 {
   "accountAssociation": {
     "type": "base",
-    "chainId": "8453"
+    "chainId": "8453",
+    "header": "eyJmaWQiOjEzOTEzMzAsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg5RTk2NkIxQUExNEYwMGVDNDZEZGNERTg0NWY1Q2FjYzcwOGM5ZjYzIn0",
+    "payload": "eyJkb21haW4iOiJwZXJzb25hLWFpLXJvdWdlLnZlcmNlbC5hcHAifQ",
+    "signature": "Q8OopExZjGzgypDT7BolOVZGMfy1m1FlNrbgKMeEZj0ZtW/nioHEygNT96wWnOyfOqppchNcB9kunalv+bLAJRw="
+
   },
   "miniapp": {
     "name": "Persona AI",
