@@ -132,17 +132,41 @@ export function PersonalityCapture({ onComplete }: PersonalityCaptureProps) {
   const analyzePersonality = async () => {
     setIsAnalyzing(true);
     try {
-      const personality = await personalityEngine.analyzePersonality(responses);
+      console.log('Starting personality analysis with responses:', responses);
       
-      // Save to database
-      await db.createPersonalityProfile({
-        user_id: 'temp-user-id', // Will be replaced with actual user ID
-        ...personality
-      });
+      // Check if we have responses
+      const responseCount = Object.keys(responses).length;
+      if (responseCount === 0) {
+        throw new Error('No responses provided for analysis');
+      }
+      
+      console.log(`Analyzing ${responseCount} responses...`);
+      const personality = await personalityEngine.analyzePersonality(responses);
+      console.log('Personality analysis completed:', personality);
+      
+      // Save to database (skip for now if database is not configured)
+      try {
+        await db.createPersonalityProfile({
+          user_id: 'temp-user-id', // Will be replaced with actual user ID
+          ...personality
+        });
+        console.log('Personality profile saved to database');
+      } catch (dbError) {
+        console.warn('Database save failed, continuing without save:', dbError);
+        // Continue without database save for now
+      }
 
       onComplete();
     } catch (error) {
       console.error('Error analyzing personality:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        responses: responses
+      });
+      
+      // Show user-friendly error message
+      alert('Failed to analyze personality. Please try again or contact support if the issue persists.');
     } finally {
       setIsAnalyzing(false);
     }

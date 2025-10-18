@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './constants';
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Check if Supabase is properly configured
+const isSupabaseConfigured = SUPABASE_URL && SUPABASE_URL !== 'https://your-project.supabase.co' && 
+                            SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'your-anon-key';
+
+export const supabase = isSupabaseConfigured ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 // Database types
 export interface Database {
@@ -231,7 +235,16 @@ export interface Database {
 
 // Database helper functions
 export class DatabaseService {
+  private inMemoryStorage = new Map<string, any>();
+
   async createUser(userData: Database['public']['Tables']['users']['Insert']) {
+    if (!supabase) {
+      console.log('Supabase not configured, using in-memory storage');
+      const user = { ...userData, id: crypto.randomUUID(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      this.inMemoryStorage.set(`user_${userData.fid}`, user);
+      return user;
+    }
+
     const { data, error } = await supabase
       .from('users')
       .insert(userData)
@@ -243,6 +256,11 @@ export class DatabaseService {
   }
 
   async getUser(fid: number) {
+    if (!supabase) {
+      console.log('Supabase not configured, using in-memory storage');
+      return this.inMemoryStorage.get(`user_${fid}`) || null;
+    }
+
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -254,6 +272,13 @@ export class DatabaseService {
   }
 
   async createPersonalityProfile(profileData: Database['public']['Tables']['personality_profiles']['Insert']) {
+    if (!supabase) {
+      console.log('Supabase not configured, using in-memory storage');
+      const profile = { ...profileData, id: crypto.randomUUID(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      this.inMemoryStorage.set(`personality_${profileData.user_id}`, profile);
+      return profile;
+    }
+
     const { data, error } = await supabase
       .from('personality_profiles')
       .insert(profileData)
@@ -265,6 +290,11 @@ export class DatabaseService {
   }
 
   async getPersonalityProfile(userId: string) {
+    if (!supabase) {
+      console.log('Supabase not configured, using in-memory storage');
+      return this.inMemoryStorage.get(`personality_${userId}`) || null;
+    }
+
     const { data, error } = await supabase
       .from('personality_profiles')
       .select('*')

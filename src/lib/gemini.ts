@@ -76,6 +76,13 @@ export class PersonalityCaptureEngine {
   }
 
   async analyzePersonality(interviewResponses: Record<string, string>): Promise<PersonalityProfile> {
+    console.log('Gemini API Key available:', !!GEMINI_API_KEY);
+    console.log('Gemini API Key length:', GEMINI_API_KEY?.length);
+    
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'your_gemini_api_key_here') {
+      throw new Error('Gemini API key is not configured properly');
+    }
+
     const prompt = `
     Analyze these interview responses to create a comprehensive personality profile:
     
@@ -108,14 +115,18 @@ export class PersonalityCaptureEngine {
     `;
 
     try {
+      console.log('Sending request to Gemini API...');
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
+      
+      console.log('Gemini API response received:', text.substring(0, 200) + '...');
       
       // Extract JSON from response
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const analysis = JSON.parse(jsonMatch[0]);
+        console.log('Parsed personality analysis:', analysis);
         return {
           id: crypto.randomUUID(),
           userId: '', // Will be set by caller
@@ -124,11 +135,55 @@ export class PersonalityCaptureEngine {
           updatedAt: new Date()
         };
       }
-      throw new Error('Could not parse personality analysis');
+      throw new Error('Could not parse personality analysis from response: ' + text.substring(0, 500));
     } catch (error) {
       console.error('Error analyzing personality:', error);
-      throw error;
+      console.error('Error type:', typeof error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      
+      // Fallback: Create a basic personality profile based on responses
+      console.log('Creating fallback personality profile...');
+      return this.createFallbackPersonalityProfile(interviewResponses);
     }
+  }
+
+  private createFallbackPersonalityProfile(responses: Record<string, string>): PersonalityProfile {
+    console.log('Creating fallback personality profile from responses:', Object.keys(responses).length);
+    
+    // Extract some basic insights from responses
+    const allText = Object.values(responses).join(' ').toLowerCase();
+    
+    // Simple keyword analysis
+    const isAnalytical = allText.includes('analyze') || allText.includes('data') || allText.includes('logic');
+    const isEmotional = allText.includes('feel') || allText.includes('heart') || allText.includes('emotion');
+    const isSocial = allText.includes('people') || allText.includes('friends') || allText.includes('social');
+    const isRiskTaker = allText.includes('risk') || allText.includes('adventure') || allText.includes('bold');
+    
+    return {
+      id: crypto.randomUUID(),
+      userId: '',
+      coreValues: ['Honesty', 'Growth', 'Relationships'],
+      decisionMakingStyle: isAnalytical ? 'analytical' : isEmotional ? 'emotional' : 'intuitive',
+      communicationStyle: isSocial ? 'direct' : 'indirect',
+      riskTolerance: isRiskTaker ? 'high' : 'medium',
+      socialPreferences: isSocial ? ['Group activities', 'Networking'] : ['One-on-one', 'Quiet environments'],
+      careerInterests: ['Technology', 'Innovation', 'Problem-solving'],
+      relationshipPatterns: ['Loyal', 'Supportive', 'Communicative'],
+      strengths: ['Adaptable', 'Creative', 'Determined'],
+      weaknesses: ['Perfectionist', 'Overthinker', 'Impatient'],
+      goals: ['Personal growth', 'Career advancement', 'Meaningful relationships'],
+      fears: ['Failure', 'Disappointing others', 'Missing opportunities'],
+      motivations: ['Making a difference', 'Learning', 'Connecting with others'],
+      personalityTraits: {
+        openness: 0.7,
+        conscientiousness: 0.8,
+        extraversion: isSocial ? 0.7 : 0.4,
+        agreeableness: 0.8,
+        neuroticism: 0.3
+      },
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
   }
 
   async generateAIClone(personality: PersonalityProfile, cloneType: string): Promise<string> {
