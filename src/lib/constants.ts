@@ -1,4 +1,4 @@
-export const APP_URL = process.env.NEXT_PUBLIC_URL!;
+export const APP_URL = "https://persona-ai-rouge.vercel.app";
 export const APP_NAME = "Persona AI";
 export const APP_DESCRIPTION = "Live Multiple Digital Lives Through AI Clones - Explore career paths, relationships, and major decisions through AI-powered simulations";
 export const APP_PRIMARY_CATEGORY = "AI";
