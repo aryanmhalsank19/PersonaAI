@@ -1,0 +1,15 @@
+{
+  "accountAssociation": {
+    "type": "base",
+    "chainId": "8453"
+  },
+  "miniapp": {
+    "name": "Persona AI",
+    "description": "Live Multiple Digital Lives Through AI Clones",
+    "url": "https://your-app.vercel.app",
+    "icon": "/icon.png"
+  },
+  "baseBuilder": {
+    "ownerAddress": "0xb1d2824660e30e03c097930Ce11EAE554f526e3C"
+  }
+}
